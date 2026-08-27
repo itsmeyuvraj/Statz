@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		547883643040231C00322FE6 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 5478835E3040231C00322FE6 /* README.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		546D0D5E303FD66800EB950A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		546D0D4E303FD66700EB950A /* Statz.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Statz.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		546D0D5D303FD66800EB950A /* StatzTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StatzTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		546D0D67303FD66800EB950A /* StatzUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StatzUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5478835E3040231C00322FE6 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +80,7 @@
 		546D0D45303FD66700EB950A = {
 			isa = PBXGroup;
 			children = (
+				5478835E3040231C00322FE6 /* README.md */,
 				546D0D50303FD66700EB950A /* Statz */,
 				546D0D60303FD66800EB950A /* StatzTests */,
 				546D0D6A303FD66800EB950A /* StatzUITests */,
@@ -212,6 +218,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				547883643040231C00322FE6 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
