@@ -1,10 +1,16 @@
-name: Xcode - Build and Analyze
+name: Xcode - Build and Release
 
 on:
   push:
     branches: [ "main" ]
+    tags:
+      - 'v*' # Triggers a release when you push a tag starting with 'v' (e.g., v1.0.0)
   pull_request:
     branches: [ "main" ]
+
+# Grants the workflow permission to create a release
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -30,12 +36,18 @@ jobs:
           if [ "`ls -A | grep -i \\.xcworkspace\$`" ]; then filetype_parameter="workspace" && file_to_build="`ls -A | grep -i \\.xcworkspace\$`"; else filetype_parameter="project" && file_to_build="`ls -A | grep -i \\.xcodeproj\$`"; fi
           file_to_build=`echo $file_to_build | awk '{$1=$1;print}'`
           
-          # Added -derivedDataPath to output the build to a specific folder
           xcodebuild clean build analyze -scheme "$scheme" -"$filetype_parameter" "$file_to_build" -destination "platform=macOS,arch=arm64" -derivedDataPath ./build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO | xcpretty && exit ${PIPESTATUS[0]}
 
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
+      - name: Compress App for Release
+        run: |
+          # Navigate to the build output folder and zip the .app directory
+          cd build/Build/Products/*
+          zip -r Statz-Unsigned.zip *.app
+          
+      - name: Create GitHub Release
+        # This step ONLY runs if the push was a version tag (like v1.0)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
         with:
-          name: Statz-App-Unsigned
-          # This grabs the compiled .app from the derived data folder
-          path: build/Build/Products/*/*.app
+          files: build/Build/Products/*/Statz-Unsigned.zip
+          generate_release_notes: true
