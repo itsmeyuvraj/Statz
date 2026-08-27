@@ -1,10 +1,16 @@
-name: Xcode - Build and Analyze
+name: Xcode - Build and Release
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  release:
+    types: [published] # Triggers when you publish a release via the GitHub UI
+
+# Grants the workflow permission to upload files to the release
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -30,5 +36,20 @@ jobs:
           if [ "`ls -A | grep -i \\.xcworkspace\$`" ]; then filetype_parameter="workspace" && file_to_build="`ls -A | grep -i \\.xcworkspace\$`"; else filetype_parameter="project" && file_to_build="`ls -A | grep -i \\.xcodeproj\$`"; fi
           file_to_build=`echo $file_to_build | awk '{$1=$1;print}'`
           
-          # Added destination and disabled code-signing in the line below
-          xcodebuild clean build analyze -scheme "$scheme" -"$filetype_parameter" "$file_to_build" -destination "platform=macOS,arch=arm64" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO | xcpretty && exit ${PIPESTATUS[0]}
+          # Builds the app without code signing and outputs it to the ./build directory
+          xcodebuild clean build analyze -scheme "$scheme" -"$filetype_parameter" "$file_to_build" -destination "platform=macOS,arch=arm64" -derivedDataPath ./build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO | xcpretty && exit ${PIPESTATUS[0]}
+
+      - name: Compress App for Release
+        # Only compress the app if a release triggered the workflow
+        if: github.event_name == 'release'
+        run: |
+          # Finds the .app folder in the build directory and zips it into the root workspace
+          find build/Build/Products -type d -name "*.app" -execdir zip -r "${GITHUB_WORKSPACE}/Statz-Unsigned.zip" {} +
+          
+      - name: Upload to GitHub Release
+        # This step ONLY runs if a release triggered the workflow
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          # Points directly to the newly created zip file to upload it
+          files: Statz-Unsigned.zip
