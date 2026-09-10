@@ -10,6 +10,7 @@ import SwiftData
 import CoreLocation
 import AppKit
 import Darwin
+import IOKit
 
 // MARK: - App Screen Time Entry
 struct AppUsageInfo: Identifiable {
@@ -40,8 +41,9 @@ final class SystemStatsMonitor: NSObject, CLLocationManagerDelegate {
     // Time
     var currentTime: Date = Date()
     
-    // CPU & RAM
+    // CPU, GPU & RAM
     var cpuUsage: Double = 0.0
+    var gpuUsage: Double = 0.0
     var ramUsagePercentage: Double = 0.0
     var ramUsedGB: Double = 0.0
     var ramTotalGB: Double = 0.0
@@ -115,6 +117,7 @@ final class SystemStatsMonitor: NSObject, CLLocationManagerDelegate {
         
         updateActiveAppDuration()
         updateCPUUsage()
+        updateGPUUsage()
         updateRAMUsage()
     }
     
@@ -261,6 +264,55 @@ final class SystemStatsMonitor: NSObject, CLLocationManagerDelegate {
         
         lastCpuInfo = cpuInfo
         lastCpuInfoCount = numCpuInfo
+    }
+    
+    // MARK: - GPU Usage IOKit API
+    private func updateGPUUsage() {
+        var iterator: io_iterator_t = 0
+        let matchDict = IOServiceMatching("IOAccelerator")
+        let result = IOServiceGetMatchingServices(kIOMainPortDefault, matchDict, &iterator)
+        guard result == kIOReturnSuccess else { return }
+        defer { IOObjectRelease(iterator) }
+        
+        var maxUsage: Double = 0.0
+        var service = IOIteratorNext(iterator)
+        while service != 0 {
+            defer {
+                IOObjectRelease(service)
+                service = IOIteratorNext(iterator)
+            }
+            
+            var properties: Unmanaged<CFMutableDictionary>?
+            guard IORegistryEntryCreateCFProperties(service, &properties, kCFAllocatorDefault, 0) == kIOReturnSuccess,
+                  let dict = properties?.takeRetainedValue() as? [String: Any] else {
+                continue
+            }
+            
+            if let perfStats = dict["PerformanceStatistics"] as? [String: Any] {
+                let utilValue: Double? = {
+                    if let util = perfStats["Device Utilization %"] as? Int {
+                        return Double(util)
+                    } else if let util = perfStats["Device Utilization %"] as? Int64 {
+                        return Double(util)
+                    } else if let util = perfStats["Device Utilization %"] as? Double {
+                        return util
+                    } else if let util = perfStats["GPU Activity"] as? Int {
+                        return Double(util)
+                    } else if let util = perfStats["GPU Activity"] as? Int64 {
+                        return Double(util)
+                    } else if let util = perfStats["GPU Core Utilization %"] as? Int {
+                        return Double(util)
+                    }
+                    return nil
+                }()
+                
+                if let util = utilValue {
+                    maxUsage = max(maxUsage, min(100.0, max(0.0, util)))
+                }
+            }
+        }
+        
+        gpuUsage = maxUsage
     }
     
     // MARK: - RAM Usage Mach API
@@ -652,6 +704,23 @@ struct ContentView: View {
                     VisualProgressGauge(
                         value: stats.cpuUsage,
                         gradientColors: stats.cpuUsage > 80 ? [.orange, .red] : [.teal, .green]
+                    )
+                }
+                
+                // GPU Metric Card
+                VStack(spacing: 6) {
+                    HStack {
+                        Text("GPU Usage")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(String(format: "%.1f%%", stats.gpuUsage))
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                    }
+                    VisualProgressGauge(
+                        value: stats.gpuUsage,
+                        gradientColors: stats.gpuUsage > 80 ? [.orange, .red] : [.cyan, .blue]
                     )
                 }
                 

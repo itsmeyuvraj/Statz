@@ -14,7 +14,7 @@
 - 🕒 **Date & Clock**: Clean digital time display with weekday and calendar date.
 - 🎯 **Active Focus Tracker**: Real-time duration timer tracking how long your frontmost application has been active.
 - ⏳ **Daily Screen Time**: Tracks total screen time for the day and visualizes usage across your top 3 most-used applications.
-- 💻 **CPU & RAM Metrics**: Live CPU usage percentage and memory consumption (Used vs. Total GB) powered by native Mach kernel APIs.
+- 💻 **CPU, GPU & RAM Metrics**: Live CPU & GPU usage percentages and memory consumption (Used vs. Total GB) powered by native Mach kernel and IOKit APIs.
 - 🎨 **Native macOS UI**: Modern, translucent, card-based interface styled specifically for macOS.
 
 ---
@@ -22,7 +22,7 @@
 ## 🛠️ Built With
 
 - **SwiftUI** & **@Observable** state management.
-- **Mach Kernel APIs** (`host_processor_info`, `host_statistics64`) for low-overhead hardware telemetry.
+- **Mach Kernel APIs** (`host_processor_info`, `host_statistics64`) & **IOKit APIs** (`IOAccelerator`) for low-overhead hardware telemetry.
 - **NSWorkspace** observers for active application and sleep/wake events.
 - **CoreLocation** & **Open-Meteo API** for location-based weather data.
 
